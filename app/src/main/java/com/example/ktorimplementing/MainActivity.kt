@@ -26,31 +26,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.startActivity
+import com.example.ktorimplementing.model.Result
+import com.example.ktorimplementing.repository.LoginRepositoryImpl
 import com.example.ktorimplementing.ui.theme.KtorimplementingTheme
-import io.ktor.client.plugins.json.JsonPlugin.Plugin.install
-import io.ktor.client.plugins.kotlinx.serializer.KotlinxSerializer
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.utils.EmptyContent.contentType
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.call.receive
-import io.ktor.client.plugins.auth.Auth
-import io.ktor.client.plugins.auth.providers.BearerTokens
-import io.ktor.client.plugins.auth.providers.bearer
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-
-import io.ktor.serialization.kotlinx.json.json
-import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 
 
 class MainActivity : ComponentActivity() {
@@ -133,13 +111,11 @@ fun LoginScreen() {
         // Login button
         Button(
             onClick = {
-                val token = apiCall()
-                Log.d("token",token.toString())
-                if (token != null) {
-                    val intent = Intent(context, MainActivity2::class.java)
-                    intent.putExtra("TOKEN", token.toString())
-                    context.startActivity(intent)
-                }
+                val result:List<Result> = LoginRepositoryImpl().didLogIn()
+                Log.d("token",result.toString())
+                val intent = Intent(context, MainActivity2::class.java)
+                intent.putExtra("result_data", ArrayList(result))
+                context.startActivity(intent)
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -156,46 +132,4 @@ fun GreetingPreview() {
     KtorimplementingTheme {
         LoginScreen()
     }
-}
-
-@Serializable
-data class Response(
-    val id: String?,
-    val username: String?,
-    val email: String?,
-    val firstName: String?,
-    val lastName: String?,
-    val gender: String?,
-    val image: String?,
-    val token: String?
-)
-@Serializable
-data class user(val username: String,val password:String)
-fun apiCall(): String? {
-    val client = HttpClient {
-        install(ContentNegotiation) {
-            json()
-        }
-    }
-    var responseContent: Response?=null
-    try {
-        runBlocking {
-            responseContent = client.post("https://dummyjson.com/auth/login") {
-                contentType(ContentType.Application.Json)
-                setBody(user("kminchelle", "0lelplR"))
-            }.body()
-
-
-//            val jsonObject = Json.parseToJsonElement(responseContent ?: "").jsonObject
-//            val token = jsonObject["token"]?.jsonPrimitive?.contentOrNull
-            Log.d("afffadgdgdfhfdjgsdshdf", responseContent!!.token.toString())
-
-
-        }
-    } catch (e: Exception) {
-        Log.e("API Call Error", e.toString())
-
-    }
-    return responseContent!!.token
-
 }
